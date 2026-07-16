@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Monuments of India — 3D Atlas</title>
+  <meta name="description" content="A game-style 3D map of India: fly, walk and search your way across 22 famous monuments, with history and trip-planning tips on the map." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛕</text></svg>" />
+  <link rel="stylesheet" href="./css/style.css" />
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <!-- loading overlay -->
+  <div id="loading">
+    <div class="load-card">
+      <div class="load-flag"><span></span><span></span><span></span></div>
+      <div class="load-title">Monuments of India</div>
+      <div class="load-sub">Raising the Himalayas…</div>
+    </div>
+  </div>
+
+  <!-- first-visit hint -->
+  <div id="hint" hidden>
+    <div class="hint-card">
+      <h2>Namaste! 🙏</h2>
+      <p>Explore <strong>22 famous monuments of India</strong> on a living 3D map.
+        Learn their stories and plan your trip — right here.</p>
+      <div class="hint-grid">
+        <span><kbd>Drag</kbd> rotate</span>
+        <span><kbd>Scroll</kbd> zoom</span>
+        <span><kbd>Dbl-click</kbd> visit a monument</span>
+        <span><kbd>/</kbd> search</span>
+        <span><kbd>T</kbd> guided tour</span>
+        <span><kbd>N</kbd> night mode</span>
+      </div>
+      <button id="hint-start">Start exploring</button>
+    </div>
+  </div>
+
+  <!-- left sidebar -->
+  <button id="sidebar-toggle" title="Monument list (M)" aria-label="Toggle monument list">
+    <span></span><span></span><span></span>
+  </button>
+  <aside id="sidebar" hidden>
+    <header>
+      <div class="sb-title">Monuments of India</div>
+      <div class="sb-stats" id="sb-stats">22 monuments · every region</div>
+    </header>
+    <div class="sb-search">
+      <svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14"/></svg>
+      <input id="search" type="text" placeholder="Search monuments, cities, states…" autocomplete="off" spellcheck="false" />
+      <kbd>/</kbd>
+    </div>
+    <div class="sb-chips" id="chips"></div>
+    <div class="sb-list" id="monument-list"></div>
+    <footer id="sb-footer">three.js · no frameworks · stylized map</footer>
+  </aside>
+
+  <!-- top-right controls -->
+  <div id="topright">
+    <div id="mode-switch">
+      <button data-mode="orbit" class="active">Orbit</button>
+      <button data-mode="fly">Fly</button>
+      <button data-mode="walk">Walk</button>
+    </div>
+    <div id="icon-buttons">
+      <button id="btn-night" title="Night mode (N)">🌙</button>
+      <button id="btn-tour" title="Guided tour (T)">▶</button>
+      <button id="btn-shot" title="Save a postcard 📷">📷</button>
+      <button id="btn-full" title="Fullscreen (F)">⛶</button>
+      <button id="btn-home" title="Overview (H)">🏠</button>
+    </div>
+  </div>
+
+  <!-- proximity caption -->
+  <div id="caption" hidden>
+    <div class="cap-name"></div>
+    <div class="cap-blurb"></div>
+  </div>
+
+  <!-- monument info card -->
+  <section id="infocard" hidden>
+    <button class="ic-close" title="Close (Esc)">×</button>
+    <div class="ic-head">
+      <h2 class="ic-name"></h2>
+      <div class="ic-loc"></div>
+    </div>
+    <div class="ic-meta"></div>
+    <p class="ic-desc"></p>
+    <ul class="ic-facts"></ul>
+    <div class="ic-trip">
+      <div class="ic-trip-title">Plan your visit</div>
+      <div class="ic-trip-grid"></div>
+      <div class="ic-nearby"></div>
+    </div>
+    <div class="ic-actions">
+      <button class="ic-walk">🚶 Walk here</button>
+    </div>
+  </section>
+
+  <!-- bottom legend -->
+  <div id="legend">
+    <span><kbd>Drag</kbd> rotate</span>
+    <span><kbd>Scroll</kbd> zoom</span>
+    <span><kbd>WASD</kbd> move</span>
+    <span><kbd>Dbl-click</kbd> fly to</span>
+    <span><kbd>T</kbd> tour</span>
+    <span><kbd>N</kbd> night</span>
+  </div>
+
+  <!-- bottom-right instruments -->
+  <div id="instruments">
+    <div id="fps">-- FPS</div>
+    <div id="compass" title="Click to face north"><div id="compass-needle">▲</div></div>
+    <canvas id="minimap" width="180" height="210"></canvas>
+  </div>
+
+  <div id="toasts"></div>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
