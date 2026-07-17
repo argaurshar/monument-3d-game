@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {
-  GRID, INDIA_OUTLINE, RIDGES, MASSIFS, THAR, RIVERS, project,
+  GRID, INDIA_OUTLINE, RIDGES, MASSIFS, THAR, RIVERS, project, forestDensity,
 } from '../data/india-geo.js';
 import {
   clamp, lerp, smoothstep, mulberry32, pointInPolygon, distToPolyline,
@@ -11,7 +11,7 @@ import {
 // Float32Array so walking / fly-to clearance can sample the exact same data
 // the mesh was built from (no per-frame raycasts).
 
-const CELL = 0.18; // degrees per grid cell (~20 km; coarse enough for a stylized map, cheap to fill)
+const CELL = 0.15; // degrees per grid cell (~17 km) — fine enough for peaky mountains
 
 let cols = 0, rows = 0, heights = null, originX = 0, originZ = 0, stepX = 0, stepZ = 0;
 
@@ -34,13 +34,21 @@ function makeNoise(seed, freq) {
 
 const noiseA = makeNoise(1337, 2.1);
 const noiseB = makeNoise(7331, 5.3);
+const noiseC = makeNoise(4211, 9.4); // high-frequency, for peaks & foothills
 
 function elevationAt(lon, lat) {
-  let h = 0.16 + 0.1 * noiseA(lon, lat) + 0.05 * noiseB(lon, lat);
+  // gently rolling plains base
+  let h = 0.16 + 0.12 * noiseA(lon, lat) + 0.06 * noiseB(lon, lat);
   for (const ridge of RIDGES) {
     const d = distToPolyline(lon, lat, ridge.pts);
     const g = ridge.amp * Math.exp(-(d * d) / (2 * ridge.sigma * ridge.sigma));
-    h = Math.max(h, 0.16 + g + 0.25 * g * noiseB(lon * 1.7, lat * 1.7));
+    if (g < 0.02) continue;
+    // break the smooth ridge tube into individual summits + foothills
+    const peak = ridge.peak ?? 0;
+    const rough = 1
+      + peak * 0.6 * (noiseC(lon * 3.1, lat * 3.1) - 0.42)
+      + peak * 0.3 * (noiseB(lon * 1.8, lat * 1.8) - 0.5);
+    h = Math.max(h, 0.16 + g * Math.max(0.35, rough));
   }
   for (const [cx, cy, amp, sigma] of MASSIFS) {
     const dx = lon - cx, dy = lat - cy;
@@ -53,6 +61,7 @@ function elevationAt(lon, lat) {
 const C = {
   plains: new THREE.Color(0x9cc069),
   lushEast: new THREE.Color(0x7fb56b),
+  forest: new THREE.Color(0x5c8a45),
   desert: new THREE.Color(0xe0c285),
   plateau: new THREE.Color(0xb5b269),
   rock: new THREE.Color(0x8e8373),
@@ -75,9 +84,15 @@ function biomeColor(lon, lat, h, coastDist, out) {
     const dThar = distToPolygonEdge(lon, lat, THAR);
     if (dThar < 1.2 && lon < 76.5 && lat > 23) out.lerp(C.desert, (1 - dThar / 1.2) * 0.6);
   }
+  // forest floor: deeper green where India is actually wooded (not in desert,
+  // fades out as bare rock/snow takes over up high)
+  if (!pointInPolygon(lon, lat, THAR)) {
+    const fd = forestDensity(lon, lat);
+    out.lerp(C.forest, clamp(fd, 0, 1) * 0.6 * (1 - smoothstep(1.5, 2.4, h)));
+  }
   // rock and snow with altitude
-  out.lerp(C.rock, smoothstep(1.1, 1.9, h));
-  out.lerp(C.snow, smoothstep(2.4, 3.1, h));
+  out.lerp(C.rock, smoothstep(1.05, 1.85, h));
+  out.lerp(C.snow, smoothstep(2.3, 3.0, h));
   // sandy shoreline ring
   out.lerp(C.sand, smoothstep(0.28, 0.06, coastDist) * (1 - smoothstep(0.5, 1.2, h)));
   // subtle dither so large fields are not flat
