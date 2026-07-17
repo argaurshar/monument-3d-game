@@ -150,9 +150,10 @@ export function buildTerrain(sites = []) {
     }
   }
 
-  // flatten monument plazas (blend toward the centre height within siteR)
-  const siteR = 1.35;
+  // flatten a plaza under each monument, sized to its footprint so the whole
+  // base sits on level ground
   for (const site of sites) {
+    const siteR = clamp((site.footprint || 1.4) * 0.82, 1.4, 4.2);
     const centerH = sampleHeightRaw(site.x, site.z);
     const plazaH = Math.max(centerH, 0.1);
     site.groundY = plazaH;

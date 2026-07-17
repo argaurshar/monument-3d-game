@@ -4,7 +4,7 @@ import { buildTerrain, buildRivers, getGroundHeight } from './terrain.js';
 import { createEnvironment } from './water-sky.js';
 import { CameraRig } from './camera.js';
 import { updateTweens } from './tween.js';
-import { monumentSites, buildMonuments, MONUMENT_MATERIAL } from './models/index.js';
+import { prepareMonuments, relaxMonuments, buildMonuments, MONUMENT_MATERIAL } from './models/index.js';
 import { createLabels } from './labels.js';
 import { createEnvirons } from './environs.js';
 import { createForest } from './forest.js';
@@ -23,8 +23,10 @@ import { MONUMENTS, TOUR_ORDER } from '../data/monuments.js';
 const canvas = document.getElementById('scene');
 const { renderer, scene, camera } = createScene(canvas);
 
-// monument world positions first, so terrain can flatten their plazas
-const sites = monumentSites();
+// build monuments up front, then declutter their positions so no two footprints
+// overlap, THEN build terrain (flattening a plaza at each final position)
+const sites = prepareMonuments();
+relaxMonuments(sites);
 const terrain = buildTerrain(sites);
 scene.add(terrain);
 scene.add(buildRivers());
@@ -48,16 +50,17 @@ scene.add(labels.group);
 const recById = new Map(monuments.records.map((r) => [r.id, r]));
 const byId = new Map(MONUMENTS.map((m) => [m.id, m]));
 
-// dev sanity: no two monuments should collapse together (min pairwise distance)
+// dev sanity: after relaxation no two monument footprints should overlap
 if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-  let minD = Infinity, pair = '';
-  for (let i = 0; i < monuments.records.length; i++) {
-    for (let j = i + 1; j < monuments.records.length; j++) {
-      const d = monuments.records[i].position.distanceTo(monuments.records[j].position);
-      if (d < minD) { minD = d; pair = `${monuments.records[i].id}↔${monuments.records[j].id}`; }
+  let worst = Infinity, pair = '';
+  const R = monuments.records;
+  for (let i = 0; i < R.length; i++) {
+    for (let j = i + 1; j < R.length; j++) {
+      const gap = R[i].position.distanceTo(R[j].position) - R[i].footprint - R[j].footprint;
+      if (gap < worst) { worst = gap; pair = `${R[i].id}↔${R[j].id}`; }
     }
   }
-  console[minD < 2.5 ? 'warn' : 'info'](`min monument spacing ${minD.toFixed(2)}u (${pair})`);
+  console[worst < 0 ? 'warn' : 'info'](`min footprint gap ${worst.toFixed(2)}u (${pair})`);
 }
 
 const rig = new CameraRig(camera, canvas, getGroundHeight);

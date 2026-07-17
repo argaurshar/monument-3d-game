@@ -17,11 +17,13 @@ export function createScene(canvas) {
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(0xf6e7cf, 60, 220);
 
+  // far plane must exceed max orbit distance + sky-dome radius (≈170+420) so the
+  // dome never clips into black when zoomed far out
   const camera = new THREE.PerspectiveCamera(
     55,
     window.innerWidth / window.innerHeight,
-    0.05,
-    500
+    0.08,
+    700
   );
   camera.position.set(0, 80, 90);
   camera.lookAt(0, 0, 0);
