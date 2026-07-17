@@ -8,7 +8,9 @@ export function createScene(canvas) {
   // (headless swiftshader) makes MSAA ruinously expensive — allow ?aa=0 to skip.
   const aa = new URLSearchParams(location.search).get('aa') !== '0';
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: aa });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // cap pixel ratio lower on phones (high-DPR screens are fill-rate bound)
+  const coarse = matchMedia('(pointer: coarse)').matches;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, coarse ? 1.5 : 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 

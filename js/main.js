@@ -12,6 +12,7 @@ import { createPicking } from './picking.js';
 import { createSidebar } from './sidebar.js';
 import { createInfoCard } from './infocard.js';
 import { createHud } from './hud.js';
+import { createJoystick } from './joystick.js';
 import { createMinimap } from './minimap.js';
 import { createDayNight } from './daynight.js';
 import { MONUMENTS, TOUR_ORDER } from '../data/monuments.js';
@@ -61,6 +62,11 @@ if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
 
 const rig = new CameraRig(camera, canvas, getGroundHeight);
 const daynight = createDayNight({ env, labels, scene, monumentMaterial: MONUMENT_MATERIAL, environsMaterials: [...environs.userData.materials, ...forest.userData.materials] });
+
+// touch: show the movement joystick whenever Fly/Walk is active
+const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+const joystick = createJoystick(rig);
+rig.onModeChange = (m) => { hud.setMode(m); joystick.show(isTouch && (m === 'fly' || m === 'walk')); };
 
 // ---------------------------------------------------------------------------
 // UI + focus flow
@@ -232,6 +238,13 @@ window.addEventListener('keydown', (e) => {
 
 // first-visit hint overlay
 const hint = document.getElementById('hint');
+if (isTouch) {
+  // touch-appropriate control hints
+  hint.querySelector('.hint-grid').innerHTML = [
+    ['Drag', 'look around'], ['Pinch', 'zoom'], ['Tap', 'a monument to visit'],
+    ['☰', 'browse & search'], ['▶', 'guided tour'], ['🌙', 'night mode'],
+  ].map(([k, t]) => `<span><kbd>${k}</kbd> ${t}</span>`).join('');
+}
 if (!localStorage.getItem('atlas-seen')) {
   hint.hidden = false;
 }
@@ -247,6 +260,8 @@ window.addEventListener('keydown', dismissHint, { once: true });
 // ---------------------------------------------------------------------------
 function updateCaption() {
   if (captionLocked || infocard.currentId) return; // focused caption wins
+  // on touch, the joystick owns the bottom-left in Fly/Walk — don't crowd it
+  if (isTouch && rig.mode !== 'orbit') { hud.hideCaption(); return; }
   let nearest = null, best = Infinity;
   for (const rec of monuments.records) {
     const dx = camera.position.x - rec.position.x;

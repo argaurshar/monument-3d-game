@@ -109,15 +109,18 @@ export function createSidebar({ onSelect }) {
     else if (e.key === 'Escape') { searchEl.blur(); }
   });
 
-  // sidebar open/close
+  // sidebar open/close — a docked panel on desktop, a slide-over drawer on phones
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const isMobile = () => window.innerWidth <= 760;
   let open = false;
   function setOpen(v) {
     open = v;
     aside.hidden = !open;
     toggle.style.display = open ? 'none' : 'flex';
+    backdrop.classList.toggle('show', open && isMobile());
   }
   toggle.addEventListener('click', () => setOpen(true));
-  // close on small screens when a monument is chosen is handled by main via API
+  backdrop.addEventListener('click', () => setOpen(false));
 
   function setActive(id) {
     for (const r of rowById.values()) r.classList.remove('active');
@@ -132,7 +135,7 @@ export function createSidebar({ onSelect }) {
   }
 
   render();
-  setOpen(true); // open by default (like the reference)
+  setOpen(!isMobile()); // docked-open on desktop, closed drawer on phones
 
   return { setActive, focusSearch, setOpen, get isOpen() { return open; } };
 }
