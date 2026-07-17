@@ -11,7 +11,7 @@ import {
 // Float32Array so walking / fly-to clearance can sample the exact same data
 // the mesh was built from (no per-frame raycasts).
 
-const CELL = 0.14; // degrees per grid cell
+const CELL = 0.18; // degrees per grid cell (~20 km; coarse enough for a stylized map, cheap to fill)
 
 let cols = 0, rows = 0, heights = null, originX = 0, originZ = 0, stepX = 0, stepZ = 0;
 

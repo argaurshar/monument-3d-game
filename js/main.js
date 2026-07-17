@@ -3,6 +3,10 @@ import { buildTerrain, buildRivers, getGroundHeight } from './terrain.js';
 import { createEnvironment } from './water-sky.js';
 import { CameraRig } from './camera.js';
 import { updateTweens } from './tween.js';
+import { monumentSites, buildMonuments } from './models/index.js';
+import { createLabels } from './labels.js';
+import { createEnvirons } from './environs.js';
+import { MONUMENTS } from '../data/monuments.js';
 
 // ---------------------------------------------------------------------------
 // bootstrap
@@ -10,12 +14,35 @@ import { updateTweens } from './tween.js';
 const canvas = document.getElementById('scene');
 const { renderer, scene, camera } = createScene(canvas);
 
-const terrain = buildTerrain([]);
+// monument world positions first, so terrain can flatten their plazas
+const sites = monumentSites();
+const terrain = buildTerrain(sites);
 scene.add(terrain);
 scene.add(buildRivers());
 
 const env = createEnvironment(scene);
 env.setNight(0, scene);
+
+// assemble monuments now that sites carry resolved groundY
+const monuments = buildMonuments(sites);
+scene.add(monuments.group);
+scene.add(createEnvirons(monuments.records, getGroundHeight));
+
+const labels = createLabels(monuments.records);
+scene.add(labels.group);
+
+// dev sanity: no two monuments should collapse together (min pairwise distance)
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+  let minD = Infinity, pair = '';
+  for (let i = 0; i < monuments.records.length; i++) {
+    for (let j = i + 1; j < monuments.records.length; j++) {
+      const d = monuments.records[i].position.distanceTo(monuments.records[j].position);
+      if (d < minD) { minD = d; pair = `${monuments.records[i].id}↔${monuments.records[j].id}`; }
+    }
+  }
+  if (minD < 2.5) console.warn(`monuments too close: ${pair} = ${minD.toFixed(2)}u`);
+  else console.info(`min monument spacing ${minD.toFixed(2)}u (${pair})`);
+}
 
 const rig = new CameraRig(camera, canvas, getGroundHeight);
 
@@ -28,7 +55,7 @@ window.__ATLAS__ = {
   night: false,
   focusedId: null,
   tourActive: false,
-  monumentCount: 0,
+  monumentCount: monuments.records.length,
 };
 
 // ---------------------------------------------------------------------------
@@ -50,6 +77,7 @@ function frame(now) {
   updateTweens(now);
   rig.update(dt);
   env.update(now / 1000);
+  labels.update(camera, now / 1000);
 
   renderer.render(scene, camera);
 

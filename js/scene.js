@@ -4,7 +4,10 @@ import * as THREE from 'three';
 // from vertex colors + one directional and one hemisphere light.
 
 export function createScene(canvas) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  // antialias defaults on for crisp low-poly edges, but a software rasterizer
+  // (headless swiftshader) makes MSAA ruinously expensive — allow ?aa=0 to skip.
+  const aa = new URLSearchParams(location.search).get('aa') !== '0';
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: aa });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;

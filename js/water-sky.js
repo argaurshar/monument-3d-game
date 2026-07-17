@@ -56,9 +56,12 @@ export function createEnvironment(scene) {
     transparent: true, opacity: 0, depthWrite: false, fog: false,
   });
   const stars = new THREE.Points(starGeo, starMat);
+  stars.visible = false; // shown only at night
 
   // --- ocean ----------------------------------------------------------------
-  const oceanGeo = new THREE.PlaneGeometry(720, 720, 56, 56);
+  // Unlit (basic) material: the water is a flat stylized colour, so we skip
+  // per-fragment lighting over this fullscreen plane — a big fill-rate saving.
+  const oceanGeo = new THREE.PlaneGeometry(720, 720, 32, 32);
   oceanGeo.rotateX(-Math.PI / 2);
   const oceanPos = oceanGeo.getAttribute('position');
   const phase = new Float32Array(oceanPos.count);
@@ -66,7 +69,7 @@ export function createEnvironment(scene) {
   for (let i = 0; i < phase.length; i++) phase[i] = pr() * Math.PI * 2;
   const ocean = new THREE.Mesh(
     oceanGeo,
-    new THREE.MeshLambertMaterial({ color: DAY.ocean.clone() })
+    new THREE.MeshBasicMaterial({ color: DAY.ocean.clone() })
   );
   ocean.name = 'ocean';
   ocean.position.y = 0;
@@ -104,6 +107,7 @@ export function createEnvironment(scene) {
       sun.intensity = lerp(DAY.sunIntensity, NIGHT.sunIntensity, t);
       hemi.intensity = lerp(DAY.hemiIntensity, NIGHT.hemiIntensity, t);
       starMat.opacity = t * 0.95;
+      stars.visible = t > 0.02; // don't rasterize 1500 points in daylight
     },
     update(time) {
       // gentle ocean swell — cheap CPU sine on a coarse grid
