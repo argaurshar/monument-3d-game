@@ -285,6 +285,21 @@ export class CameraRig {
     this.flyTo(dest, { radius: HOME.radius * 0.82, height: HOME.radius * 0.55, lookHeight: 0 });
   }
 
+  faceNorth() {
+    if (this.mode !== 'orbit') this.setMode('orbit', { force: true });
+    this.cancelFlight();
+    const from = this.theta;
+    let to = 0;
+    while (from - to > Math.PI) to += Math.PI * 2;
+    while (to - from > Math.PI) to -= Math.PI * 2;
+    const rig = this;
+    this._flightTween = tween({
+      duration: 0.5,
+      onUpdate(k) { rig.theta = lerp(from, to, k); rig._applyOrbit(); },
+      onComplete() { rig._flightTween = null; },
+    });
+  }
+
   cancelFlight() {
     if (this._flightTween) {
       this._flightTween.cancel();

@@ -69,7 +69,7 @@ const hud = createHud({
   onScreenshot: () => { wantShot = true; },
   onFullscreen: () => toggleFullscreen(),
   onHome: () => goHome(),
-  onCompass: () => rig.home(),
+  onCompass: () => rig.faceNorth(),
 });
 
 const infocard = createInfoCard({
