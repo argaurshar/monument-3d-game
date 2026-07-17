@@ -28,7 +28,7 @@ export function hawaMahal(c) {
 
   // five receding storeys form the pyramidal honeycomb facade
   const widths = [8.2, 7.7, 6.2, 4.6, 3.0];
-  const depths = [1.95, 1.85, 1.75, 1.6, 1.45];
+  const depths = [1.7, 1.6, 1.5, 1.4, 1.3];
   const counts = [9, 9, 7, 5, 3];
   const sh = 1.08;
   let y0 = 0.7;
@@ -60,58 +60,65 @@ export function hawaMahal(c) {
 // massive round bastion towers with crenellated tops, and a crowning palace of
 // pale sandstone with rows of latticed jharokha windows and domed chhatris.
 export function mehrangarhFort(c) {
-  const stone = c, rock = 0x6f5536, rock2 = 0x574024, pale = 0xd7c39c, white = 0xf2e3e6,
-    dark = 0x7a5a30, gold = 0xd8b24a;
+  const stone = c, rock = 0x8a6a42, rock2 = 0x6f5536, pale = 0xd7c39c, white = 0xf2e3e6,
+    dark = 0x6f5024, gold = 0xd8b24a;
   const p = [];
 
-  // rocky cliff the fort grows out of
-  p.push(cyl(4.6, 5.1, 1.3, rock2, { y: 0.65 }, 8));
-  p.push(cyl(4.0, 4.5, 1.1, rock, { y: 1.55 }, 7));
-  for (const [ang, r, s] of [[0.5, 4.2, 1.3], [2.2, 4.0, 1.0], [3.7, 4.3, 1.4], [5.3, 3.9, 1.1]]) {
-    p.push(box(s, 1.5, s, rock2, { x: Math.cos(ang) * r, z: Math.sin(ang) * r, y: 0.85, ry: ang }));
+  // rocky hill the fort grows out of (mid-tone, not a dark void)
+  p.push(cyl(4.3, 4.8, 1.2, rock2, { y: 0.6 }, 8));
+  p.push(cyl(3.7, 4.2, 1.2, rock, { y: 1.5 }, 7));
+  for (const [ang, r, s] of [[0.5, 3.9, 1.2], [2.2, 3.7, 1.0], [3.7, 4.0, 1.3], [5.3, 3.6, 1.1]]) {
+    p.push(box(s, 1.4, s, rock, { x: Math.cos(ang) * r, z: Math.sin(ang) * r, y: 0.8, ry: ang }));
   }
 
   // main fort body — battered (wider at base), rising tall from the rock
-  p.push(cyl(3.7, 4.3, 1.3, stone, { y: 2.35 }, 10));
-  p.push(box(6.4, 3.5, 4.6, stone, { y: 4.25 }));
+  p.push(cyl(3.6, 4.2, 1.3, stone, { y: 2.3 }, 10));
+  p.push(box(6.2, 3.4, 4.4, stone, { y: 4.15 }));
   // sheer, crenellated front curtain wall
-  p.push(crenellatedWall(6.6, 4.3, 0.7, stone, { y: 1.9, z: 2.35 }));
+  p.push(crenellatedWall(6.4, 4.2, 0.6, stone, { y: 1.9, z: 2.25 }));
 
-  // massive round battered bastions with crenellated parapets
+  // massive round battered bastions with clean crenellated caps
   function bastion(x, z, h, cap) {
-    p.push(cyl(0.92, 1.24, h, stone, { x, z, y: 1.55 + h / 2 }, 12));
-    for (let k = 0; k < 10; k++) {
-      const a = (k / 10) * Math.PI * 2;
-      p.push(box(0.26, 0.44, 0.26, stone, { x: x + Math.cos(a) * 0.98, z: z + Math.sin(a) * 0.98, y: 1.55 + h + 0.08 }));
+    p.push(cyl(0.9, 1.22, h, stone, { x, z, y: 1.5 + h / 2 }, 12));
+    p.push(cyl(1.05, 1.0, 0.22, stone, { x, z, y: 1.5 + h + 0.02 }, 12));   // parapet ring
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      p.push(box(0.24, 0.34, 0.22, stone, { x: x + Math.cos(a) * 0.92, z: z + Math.sin(a) * 0.92, y: 1.5 + h + 0.28, ry: a }));
     }
-    if (cap === 'dome') p.push(chhatri(0.38, 0.34, pale, { x, z, y: 1.55 + h + 0.04 }));
+    if (cap === 'dome') p.push(chhatri(0.34, 0.32, pale, { x, z, y: 1.5 + h + 0.12 }));
   }
-  bastion(2.95, 2.35, 4.6, 'dome');
-  bastion(-2.95, 2.35, 4.3, 'flat');
-  bastion(3.05, -2.25, 4.2, 'flat');
-  bastion(-3.05, -2.25, 4.8, 'dome');
+  bastion(2.85, 2.25, 4.5, 'dome');
+  bastion(-2.85, 2.25, 4.2, 'flat');
+  bastion(2.95, -2.15, 4.1, 'flat');
+  bastion(-2.95, -2.15, 4.7, 'dome');
 
-  // fortified entrance gate at the front base
-  p.push(archway(1.9, 2.4, 1.1, 0.5, dark, { y: 1.85, z: 2.5 }));
+  // fortified entrance: a tall arched gate recessed into the front wall
+  p.push(box(2.4, 3.2, 0.4, pale, { y: 3.1, z: 2.28 }));            // gate surround
+  p.push(box(1.5, 2.4, 0.5, dark, { y: 2.1, z: 2.42 }));           // dark recessed opening
+  p.push(dome(0.75, pale, { y: 3.3, z: 2.34 }, 0.85));            // arched head over the gate
 
   // crowning palace of pale sandstone with famous latticed jharokha windows
-  p.push(box(5.2, 1.9, 3.4, pale, { y: 6.9 }));
-  p.push(box(5.4, 0.2, 3.6, white, { y: 5.95 }));
-  p.push(latticeWall(4.4, 1.35, 0.28, dark, { y: 6.95, z: 1.74 }, 8, 3));   // jharokha screen
-  p.push(latticeWall(4.9, 1.0, 0.3, pale, { y: 5.15, z: 2.4 }, 8, 2));      // lower window band
+  p.push(box(5.0, 1.9, 3.2, pale, { y: 6.75 }));
+  p.push(box(5.2, 0.22, 3.4, white, { y: 5.8 }));                   // cornice under palace
+  p.push(latticeWall(4.2, 1.4, 0.28, dark, { y: 6.8, z: 1.64 }, 9, 3));    // main jharokha screen
+  p.push(latticeWall(4.7, 0.95, 0.3, dark, { y: 5.05, z: 2.32 }, 9, 2));   // lower window band
+  // side jharokha screens so the palace isn't blank in 3/4 view
+  for (const sx of [-1, 1]) p.push(latticeWall(2.6, 1.3, 0.26, dark, { x: sx * 2.52, y: 6.8, ry: Math.PI / 2 }, 5, 3));
   // projecting curved bay windows on the palace face
-  for (const bx of [-1.7, 1.7]) {
-    p.push(cyl(0.48, 0.52, 1.0, pale, { x: bx, y: 6.95, z: 1.8 }, 8));
-    p.push(dome(0.52, white, { x: bx, y: 7.45, z: 1.8 }, 0.7));
+  for (const bx of [-1.6, 1.6]) {
+    p.push(cyl(0.46, 0.5, 1.0, pale, { x: bx, y: 6.8, z: 1.7 }, 8));
+    p.push(dome(0.5, white, { x: bx, y: 7.3, z: 1.7 }, 0.7));
   }
+  // palace parapet with tiny merlons
+  for (let k = 0; k < 9; k++) p.push(box(0.26, 0.3, 0.26, pale, { x: (k - 4) * 0.56, y: 7.85, z: 1.55 }));
 
-  // domed pavilions + flag on the roofline
-  p.push(chhatri(0.55, 0.4, pale, { x: -1.7, z: -0.6, y: 7.85 }));
-  p.push(chhatri(0.55, 0.4, pale, { x: 1.7, z: -0.6, y: 7.85 }));
-  p.push(cyl(0.05, 0.05, 1.6, dark, { y: 8.7 }));
-  p.push(box(0.75, 0.42, 0.04, gold, { x: 0.37, y: 9.0 }));
+  // domed chhatri pavilions + flag on the roofline
+  p.push(chhatri(0.5, 0.38, pale, { x: -1.6, z: -0.7, y: 7.75 }));
+  p.push(chhatri(0.5, 0.38, pale, { x: 1.6, z: -0.7, y: 7.75 }));
+  p.push(cyl(0.05, 0.05, 1.5, dark, { y: 8.5 }));
+  p.push(box(0.72, 0.4, 0.04, gold, { x: 0.36, y: 8.8 }));
 
-  return finalize(p, { proxyRadius: 5.2 });
+  return finalize(p, { proxyRadius: 5.0 });
 }
 
 // ----------------------------------------------------------- Gateway of India
@@ -135,18 +142,19 @@ export function gatewayOfIndia(c) {
     p.push(dome(0.42, stone, { x: sx * 3.05, y: 4.15, z: 1.9 }, 0.8));
   }
 
-  // grand central archway through the structure
+  // grand central archway through the structure, with a shadowed inner recess
   p.push(archway(4.4, 5.2, 4.1, 1.1, stone, { y: 0.7 }));
+  p.push(box(2.8, 4.0, 0.4, dark, { y: 2.6, z: -1.4 }));    // deep shadowed passage end
   // cornice band + attic tying the whole front together
   p.push(box(8.2, 0.32, 4.15, white, { y: 5.55 }));
   p.push(box(8.2, 0.3, 4.2, stone, { y: 5.86 }));
 
   // great central dome on an octagonal drum
-  p.push(box(3.8, 0.5, 3.8, white, { y: 6.15 }));           // stepped dome base
-  p.push(cyl(1.85, 2.05, 1.0, stone, { y: 6.9 }, 8));       // octagonal drum
-  p.push(dome(2.1, stone, { y: 7.4 }, 0.9));                // dome
-  p.push(cyl(0.18, 0.22, 0.5, gold, { y: 9.35 }, 8));       // finial
-  p.push(sphere(0.2, gold, { y: 9.65 }, 10, 8));
+  p.push(cyl(2.5, 2.7, 0.4, white, { y: 6.2 }, 8));         // octagonal stepped base
+  p.push(cyl(1.9, 2.1, 0.95, stone, { y: 6.88 }, 8));       // octagonal drum
+  p.push(dome(2.1, stone, { y: 7.35 }, 0.92));              // dome
+  p.push(cyl(0.18, 0.22, 0.5, gold, { y: 9.3 }, 8));        // finial
+  p.push(sphere(0.2, gold, { y: 9.6 }, 10, 8));
 
   // four corner turrets with small domes
   const tx = 3.55, tz = 1.7;
@@ -170,16 +178,16 @@ export function statueOfUnity(c) {
     stone = 0xb7ad9c, white = 0xe7dccb;
   const p = [];
 
-  // the Narmada river wrapping the base
-  p.push(box(9.0, 0.22, 5.4, water, { y: 0.11, z: -3.7 }));
-  p.push(box(9.0, 0.18, 1.8, water, { y: 0.09, z: 2.7 }));
+  // the Narmada: a broad reservoir behind the dam + a river channel in front
+  p.push(box(9.4, 0.22, 3.6, water, { y: 0.11, z: -4.4 }));           // reservoir
+  p.push(box(9.4, 0.18, 2.0, water, { y: 0.09, z: 3.0 }));            // river in front
 
-  // Sardar Sarovar Dam: a long low grey gravity dam with spillway gates
-  const damZ = -2.3;
-  p.push(box(9.0, 1.7, 1.0, dam, { y: 0.85, z: damZ }));
-  p.push(box(9.0, 0.24, 1.25, stone, { y: 1.7, z: damZ }));           // roadway deck
-  for (let i = 0; i < 13; i++) {
-    p.push(box(0.45, 1.3, 0.16, damDk, { x: (i - 6) * 0.66, y: 0.7, z: damZ + 0.55 }));  // gates
+  // Sardar Sarovar Dam: a long low grey gravity dam with a row of spillway gates
+  const damZ = -2.4;
+  p.push(box(9.4, 2.0, 1.0, dam, { y: 1.0, z: damZ }));
+  p.push(box(9.4, 0.26, 1.3, stone, { y: 2.0, z: damZ }));            // roadway deck
+  for (let i = 0; i < 14; i++) {
+    p.push(box(0.42, 1.5, 0.16, damDk, { x: (i - 6.5) * 0.66, y: 0.78, z: damZ + 0.55 }));  // gates
   }
 
   // base building (visitor gallery) + tiered star plinth
@@ -187,10 +195,11 @@ export function statueOfUnity(c) {
   for (let i = 0; i < 9; i++) p.push(box(0.16, 0.7, 0.16, white, { x: (i - 4) * 0.6, y: 0.55, z: 1.72 }));
   p.push(box(6.0, 0.25, 3.8, darkB, { y: 1.25 }));                    // cornice
   p.push(box(3.8, 1.0, 2.6, stone, { y: 1.85 }));                     // upper plinth
-  // 10-point star plinth: two pentagonal slabs offset 36 degrees
-  p.push(cyl(2.0, 2.2, 0.55, darkB, { y: 2.55 }, 5));
-  p.push(cyl(2.0, 2.2, 0.55, darkB, { y: 2.55, ry: Math.PI / 5 }, 5));
-  const feetY = 2.82;
+  p.push(cyl(2.4, 2.55, 0.34, stone, { y: 2.5 }, 22));               // round tier
+  // 10-point star plinth: two thin pentagonal slabs offset 36 degrees
+  p.push(cyl(2.5, 2.5, 0.34, darkB, { y: 2.82 }, 5));
+  p.push(cyl(2.5, 2.5, 0.34, darkB, { y: 2.82, ry: Math.PI / 5 }, 5));
+  const feetY = 2.98;
 
   // the colossus itself — a clearly human standing figure, facing the camera
   p.push(humanFigure(6.0, bronze, { y: feetY }));
