@@ -14,7 +14,7 @@ export const MONUMENT_MATERIAL = new THREE.MeshLambertMaterial({
   flatShading: true,
 });
 
-const BUILDERS = { ...north, ...west, ...ce, ...south };
+export const BUILDERS = { ...north, ...west, ...ce, ...south };
 
 // Build all monuments. `sites` (with resolved groundY from terrain flattening)
 // come back so terrain can flatten plazas; we place after that using site.groundY.
