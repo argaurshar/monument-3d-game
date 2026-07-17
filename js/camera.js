@@ -60,12 +60,19 @@ export class CameraRig {
   _bindInput() {
     const dom = this.dom;
     dom.addEventListener('contextmenu', (e) => e.preventDefault());
+    // middle-button (wheel-click) drag pans the map like a right-drag; suppress
+    // the browser's default middle-click autoscroll so it reads as a clean drag.
+    dom.addEventListener('mousedown', (e) => { if (e.button === 1) e.preventDefault(); });
 
     dom.addEventListener('pointerdown', (e) => {
       if (!this.enabled) return;
       this._notifyInput();
       dom.setPointerCapture(e.pointerId);
       this._drag = { x: e.clientX, y: e.clientY, button: e.button, moved: false };
+      // middle / right button (or Shift) drags to pan — show a grabbing cursor
+      if (this.mode === 'orbit' && (e.button === 1 || e.button === 2 || e.shiftKey)) {
+        dom.classList.add('grabbing');
+      }
     });
 
     dom.addEventListener('pointermove', (e) => {
@@ -83,7 +90,7 @@ export class CameraRig {
       this._drag.y = e.clientY;
 
       if (this.mode === 'orbit') {
-        if (this._drag.button === 2 || e.shiftKey) {
+        if (this._drag.button === 1 || this._drag.button === 2 || e.shiftKey) {
           this._panOrbit(dx, dy);
         } else {
           this.velTheta = -dx * 0.0052;
@@ -94,7 +101,7 @@ export class CameraRig {
       }
     });
 
-    const endDrag = () => { this._drag = null; };
+    const endDrag = () => { this._drag = null; dom.classList.remove('grabbing'); };
     dom.addEventListener('pointerup', endDrag);
     dom.addEventListener('pointercancel', endDrag);
 

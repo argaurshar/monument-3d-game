@@ -28,6 +28,8 @@ body {
 }
 
 #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+/* while panning (middle / right / shift drag) — beats picking's inline hover cursor */
+#scene.grabbing { cursor: grabbing !important; }
 
 kbd {
   font: 600 11px/1 ui-monospace, "SF Mono", Menlo, monospace;
