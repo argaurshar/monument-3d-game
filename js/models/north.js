@@ -66,7 +66,10 @@ export function tajMahal(c) {
   for (const [dx, dz] of [[-m, -m], [m, -m], [-m, m], [m, m]])
     p.push(minaret(5.5, 0.3, white, { x: dx, z: dz, y: plY }));
 
-  return finalize(p, { proxyRadius: 5.4 });
+  // present the classic head-on view: iwan facing, minarets flanking
+  const merged = mergeGeoms(p);
+  merged.applyMatrix4(new THREE.Matrix4().makeRotationY(Math.PI / 4));
+  return finalize([merged], { proxyRadius: 5.4 });
 }
 
 // -------------------------------------------------------------- Qutub Minar
@@ -212,9 +215,9 @@ export function lotusTemple(c) {
   // Each petal is a two-part shell (leaning lower + upcurled tip) so it reads
   // as a curved lotus petal rather than a straight spike.
   const tiers = [
-    { ring: 1.24, lean: 1.12, curl: 0.72, h: 1.9, r0: 0.92, sx: 0.46, sz: 1.44, off: 0,           col: shade },
-    { ring: 0.92, lean: 0.74, curl: 0.46, h: 2.15, r0: 0.84, sx: 0.46, sz: 1.3, off: Math.PI / 9, col: white },
-    { ring: 0.5,  lean: 0.4,  curl: 0.22, h: 2.3, r0: 0.74, sx: 0.48, sz: 1.14, off: 0,           col: white },
+    { ring: 1.28, lean: 1.18, curl: 0.82, h: 1.75, r0: 1.15, sx: 0.4, sz: 1.9, off: 0,           col: shade },
+    { ring: 0.9,  lean: 0.76, curl: 0.46, h: 2.0,  r0: 1.02, sx: 0.4, sz: 1.7, off: Math.PI / 9, col: white },
+    { ring: 0.46, lean: 0.4,  curl: 0.2,  h: 2.25, r0: 0.88, sx: 0.42, sz: 1.44, off: 0,          col: white },
   ];
   for (const t of tiers) {
     for (let i = 0; i < 9; i++) {
@@ -238,9 +241,8 @@ export function lotusTemple(c) {
       }, 6));
     }
   }
-  // central bud (rounded closed heart of the flower)
-  p.push(sphere(0.55, white, { y: bY + 1.0, sy: 1.7 }, 10, 8));
-  p.push(cone(0.42, 1.1, white, { y: bY + 1.85 }, 8));
+  // central bud — a smooth rounded heart so the flower closes cleanly (no spike)
+  p.push(sphere(0.68, white, { y: bY + 1.15, sy: 2.0 }, 12, 9));
 
   // nine blue pools ringing the base
   for (let i = 0; i < 9; i++) {
