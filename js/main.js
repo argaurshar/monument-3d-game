@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { createScene } from './scene.js';
 import { buildTerrain, buildRivers, getGroundHeight } from './terrain.js';
 import { createEnvironment } from './water-sky.js';
@@ -10,6 +11,7 @@ import { createPicking } from './picking.js';
 import { createSidebar } from './sidebar.js';
 import { createInfoCard } from './infocard.js';
 import { createHud } from './hud.js';
+import { createMinimap } from './minimap.js';
 import { createDayNight } from './daynight.js';
 import { MONUMENTS, TOUR_ORDER } from '../data/monuments.js';
 
@@ -87,6 +89,17 @@ const picking = createPicking({
   onSelect: (id) => focusMonument(id),
 });
 
+const minimap = createMinimap({
+  records: monuments.records, camera,
+  onSelect: (id) => focusMonument(id),
+  onGoto: (x, z) => {
+    if (tour.active) tour.stop();
+    clearFocus();
+    const y = Math.max(getGroundHeight(x, z), 0);
+    rig.flyTo(new THREE.Vector3(x, y, z), { radius: 34, height: 24, lookHeight: 0 });
+  },
+});
+
 function setMode(m) {
   if (tour.active) tour.stop();
   rig.setMode(m);
@@ -100,6 +113,8 @@ function focusMonument(id, opts = {}) {
   captionLocked = true;
   labels.setFocused(id);
   sidebar.setActive(id);
+  minimap.setFocused(id);
+  infocard.hide(); // clear any previous card; the new one returns on arrival
   hud.setCaption(rec.data.name, rec.data.blurb); // big name during the flight
   const cam = rec.data.cam || {};
   rig.flyTo(rec.position, {
@@ -126,6 +141,7 @@ function clearFocus() {
   window.__ATLAS__.focusedId = null;
   captionLocked = false;
   labels.setFocused(null);
+  minimap.setFocused(null);
   infocard.hide();
 }
 
@@ -263,6 +279,7 @@ window.__ATLAS__ = {
   monumentCount: monuments.records.length,
   focus: (id) => focusMonument(id),
   worldPosOf: (id) => { const r = recById.get(id); return r ? { x: r.position.x, y: r.position.y, z: r.position.z } : null; },
+  minimapPosOf: (id) => minimap.posOf(id),
 };
 
 // ---------------------------------------------------------------------------
@@ -279,6 +296,7 @@ function frame(now) {
   labels.update(camera, now / 1000);
   updateCaption();
   hud.update(camera, now);
+  minimap.update(now);
 
   renderer.render(scene, camera);
   if (wantShot) { wantShot = false; saveShot(); }
