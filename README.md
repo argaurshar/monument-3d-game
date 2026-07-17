@@ -32,6 +32,12 @@ network calls**. Runs from any static server and on GitHub Pages.
   **“Plan your visit”** block: best months, nearest airport & railhead, typical
   visit duration, and clickable nearby monuments.
 - **Guided tour** (the *Golden Route*) that flies you monument to monument.
+- **Plan a trip — “My Journey”** — add monuments to a saved itinerary and the map
+  draws glowing flight-path arcs between your stops (with connectors on the
+  minimap); press ▶ to fly the whole route. Your trip is saved in the browser.
+- **Shareable deep links** — every monument has its own URL (e.g. `…/#taj-mahal`);
+  the **🔗 Share** button copies it (and uses the native share sheet on phones),
+  and opening a link flies you straight there.
 - **Day / night** — at night the sky deepens, stars come out, and every
   monument is floodlit, just like the real ones.
 - **Minimap, compass, FPS, toasts** and a controls legend round out the HUD.
@@ -61,6 +67,7 @@ work — ES modules require an `http(s)://` origin.)
 | Camera modes | **1** Orbit · **2** Fly · **3** Walk |
 | Search | **/** or **Ctrl/⌘ K** |
 | Guided tour | **T** (**Space** to skip a stop) |
+| My Journey (trip planner) | **J**, or the 🧭 button |
 | Day / night | **N** |
 | Overview / reset | **H** · **Esc** closes cards & exits the tour |
 | Fullscreen · Screenshot | **F** · 📷 button |
@@ -87,6 +94,10 @@ Shore Temple
 | Fly to a monument | Night mode | Walk the grounds |
 | --- | --- | --- |
 | ![Taj Mahal info card](screenshots/02-taj-card.png) | ![Night mode](screenshots/03-night.png) | ![Walk mode](screenshots/05-walk.png) |
+
+| Plan a trip — “My Journey” with route arcs on the map |
+| --- |
+| ![My Journey trip planner with flight-path arcs](screenshots/07-trip.png) |
 
 ## 🌐 Deploy to GitHub Pages
 
@@ -117,7 +128,7 @@ works correctly from the project subpath (`…/monument-3d-game/`).
 ## 💡 Ideas for later
 
 Hindi / localized text, real photos, a monuments quiz mode, higher-detail glTF
-models, state boundaries, and on-screen joystick controls for mobile.
+models, state boundaries, and exporting a planned journey as a shareable link.
 
 ## License
 

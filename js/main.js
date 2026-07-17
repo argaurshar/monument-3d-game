@@ -14,6 +14,7 @@ import { createInfoCard } from './infocard.js';
 import { createHud } from './hud.js';
 import { createJoystick } from './joystick.js';
 import { createMinimap } from './minimap.js';
+import { createTrip } from './trip.js';
 import { createDayNight } from './daynight.js';
 import { MONUMENTS, TOUR_ORDER } from '../data/monuments.js';
 
@@ -66,6 +67,9 @@ if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
 const rig = new CameraRig(camera, canvas, getGroundHeight);
 const daynight = createDayNight({ env, labels, scene, monumentMaterial: MONUMENT_MATERIAL, environsMaterials: [...environs.userData.materials, ...forest.userData.materials] });
 
+// respect reduced-motion: no idle attract-mode drift
+rig.autoRotate = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 // touch: show the movement joystick whenever Fly/Walk is active
 const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 const joystick = createJoystick(rig);
@@ -91,6 +95,9 @@ const infocard = createInfoCard({
   onNearby: (id) => focusMonument(id),
   onWalk: (id) => walkTo(id),
   onClose: () => clearFocus(),
+  onShare: (id) => shareMonument(id),
+  onTripToggle: (id) => trip.toggle(id),
+  isInTrip: (id) => trip.has(id),
 });
 
 const sidebar = createSidebar({
@@ -114,6 +121,17 @@ const minimap = createMinimap({
   },
 });
 
+// "My Journey" trip planner (itinerary + route arcs + fly-through)
+const trip = createTrip({
+  scene, recById, minimap,
+  onFocus: (id) => focusMonument(id),
+  onPlay: (ids) => tour.start(ids, { loop: false, label: '🧭 <b>Your journey</b> — enjoy the ride' }),
+  onToast: (m) => hud.toast(m),
+  onChange: () => infocard.refreshTrip(),
+  // on phones both are bottom sheets — only one at a time
+  onOpen: () => { if (isTouch) infocard.hide(); },
+});
+
 function setMode(m) {
   if (tour.active) tour.stop();
   rig.setMode(m);
@@ -128,12 +146,13 @@ function focusMonument(id, opts = {}) {
   labels.setFocused(id);
   sidebar.setActive(id);
   minimap.setFocused(id);
+  setHash(id); // deep-linkable: …/#taj-mahal
   infocard.hide(); // clear any previous card; the new one returns on arrival
   hud.setCaption(rec.data.name, rec.data.blurb); // big name during the flight
   const cam = rec.data.cam || {};
   rig.flyTo(rec.position, {
     radius: cam.radius, height: cam.height,
-    onArrive: () => { hud.hideCaption(); infocard.show(rec.data); if (opts.thenWalk) walkTo(id, true); },
+    onArrive: () => { hud.hideCaption(); if (isTouch && trip.isOpen) trip.setOpen(false); infocard.show(rec.data); if (opts.thenWalk) walkTo(id, true); },
   });
   hud.setMode('orbit');
 }
@@ -156,8 +175,43 @@ function clearFocus() {
   captionLocked = false;
   labels.setFocused(null);
   minimap.setFocused(null);
+  setHash(null);
   infocard.hide();
 }
+
+// ---------------------------------------------------------------------------
+// shareable deep links: …/#monument-id
+// ---------------------------------------------------------------------------
+let hashGuard = false;
+function setHash(id) {
+  hashGuard = true;
+  const url = location.pathname + location.search + (id ? '#' + id : '');
+  history.replaceState(null, '', url);
+  // clear the guard next tick (replaceState doesn't fire hashchange, but be safe)
+  setTimeout(() => { hashGuard = false; }, 0);
+}
+function shareMonument(id) {
+  const rec = recById.get(id);
+  const link = `${location.origin}${location.pathname}#${id}`;
+  const done = () => hud.toast('🔗 Link copied — share this monument');
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(link).then(done).catch(() => promptCopy(link));
+  } else {
+    promptCopy(link);
+  }
+  if (navigator.share && /Mobi|Android/i.test(navigator.userAgent) && rec) {
+    navigator.share({ title: `${rec.data.name} — Monuments of India`, url: link }).catch(() => {});
+  }
+}
+function promptCopy(link) {
+  window.prompt('Copy this link:', link);
+}
+window.addEventListener('hashchange', () => {
+  if (hashGuard) return;
+  const id = location.hash.replace(/^#/, '');
+  if (recById.has(id)) focusMonument(id);
+  else if (!id) clearFocus();
+});
 
 function goHome() {
   clearFocus();
@@ -185,17 +239,23 @@ const tour = {
   active: false,
   i: 0,
   timer: null,
-  start() {
+  list: TOUR_ORDER,
+  loop: true,
+  start(list = TOUR_ORDER, { loop = true, label = 'Guided tour — <b>the Golden Route</b>' } = {}) {
+    if (!list.length) return;
     this.active = true;
     this.i = 0;
+    this.list = list;
+    this.loop = loop;
     window.__ATLAS__.tourActive = true;
     hud.setTourActive(true);
-    hud.toast('Guided tour — <b>the Golden Route</b>');
+    hud.toast(label);
     this.go();
   },
   go() {
     if (!this.active) return;
-    const id = TOUR_ORDER[this.i % TOUR_ORDER.length];
+    if (!this.loop && this.i >= this.list.length) { this.stop(); return; }
+    const id = this.list[this.i % this.list.length];
     focusMonument(id);
     clearTimeout(this.timer);
     this.timer = setTimeout(() => { this.i++; this.go(); }, 6400);
@@ -224,7 +284,8 @@ window.addEventListener('keydown', (e) => {
   if (typing) return;
   switch (e.key) {
     case 'Escape':
-      if (tour.active) tour.stop();
+      if (trip.isOpen) trip.setOpen(false);
+      else if (tour.active) tour.stop();
       else if (window.__ATLAS__.focusedId) clearFocus();
       break;
     case '1': setMode('orbit'); break;
@@ -232,6 +293,7 @@ window.addEventListener('keydown', (e) => {
     case '3': setMode('walk'); break;
     case 'n': case 'N': toggleNight(); break;
     case 't': case 'T': toggleTour(); break;
+    case 'j': case 'J': trip.setOpen(!trip.isOpen); break;
     case 'h': case 'H': goHome(); break;
     case 'f': case 'F': toggleFullscreen(); break;
     case ' ': if (tour.active) { e.preventDefault(); tour.next(); } break;
@@ -306,6 +368,10 @@ window.__ATLAS__ = {
   focus: (id) => focusMonument(id),
   worldPosOf: (id) => { const r = recById.get(id); return r ? { x: r.position.x, y: r.position.y, z: r.position.z } : null; },
   minimapPosOf: (id) => minimap.posOf(id),
+  tripCount: () => trip.count(),
+  tripToggle: (id) => trip.toggle(id),
+  tripSetOpen: (v) => trip.setOpen(v),
+  tripRouteObjects: () => trip.routeObjectCount(),
 };
 
 // ---------------------------------------------------------------------------
@@ -334,3 +400,7 @@ requestAnimationFrame(frame);
 // reveal the app
 document.getElementById('loading').classList.add('done');
 window.__ATLAS__.ready = true;
+
+// open a deep-linked monument (…/#taj-mahal) after a beat so the fly-to reads
+const initialId = location.hash.replace(/^#/, '');
+if (recById.has(initialId)) setTimeout(() => focusMonument(initialId), 600);

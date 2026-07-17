@@ -128,10 +128,31 @@ try {
   await page.waitForTimeout(500);
   await shot(page, '06-minimap-jump');
 
-  // 8 — no console errors + screenshots exist
-  console.log('8. integrity');
+  // 8 — deep links + "My Journey" trip planner
+  console.log('8. deep links + trip planner');
+  // focusing a monument writes a shareable hash
+  await page.evaluate(() => window.__ATLAS__.focus('charminar'));
+  await page.waitForFunction(() => window.__ATLAS__.focusedId === 'charminar' && !window.__ATLAS__.flying, null, { timeout: 10000 });
+  ok(await page.evaluate(() => location.hash) === '#charminar', 'focus writes deep-link hash');
+  // and navigating the hash flies there (the reverse binding)
+  await page.evaluate(() => { location.hash = '#howrah-bridge'; });
+  await page.waitForFunction(() => window.__ATLAS__.focusedId === 'howrah-bridge', null, { timeout: 10000 });
+  ok(true, 'hash change flies to monument');
+  // build a trip
+  await page.evaluate(() => { window.__ATLAS__.tripToggle('taj-mahal'); window.__ATLAS__.tripToggle('hawa-mahal'); window.__ATLAS__.tripToggle('charminar'); });
+  ok(await page.evaluate(() => window.__ATLAS__.tripCount()) === 3, 'three stops added to trip');
+  ok(await page.evaluate(() => window.__ATLAS__.tripRouteObjects()) >= 4, 'route draws pins + arcs in the scene');
+  await page.evaluate(() => window.__ATLAS__.tripSetOpen(true));
+  await page.waitForTimeout(400);
+  ok(!(await page.evaluate(() => document.getElementById('trip-panel').hidden)), 'journey panel opens');
+  ok(await page.$$eval('#tp-list .tp-item', (e) => e.length) === 3, 'journey lists all three stops');
+  await shot(page, '07-trip');
+  await page.evaluate(() => window.__ATLAS__.tripSetOpen(false));
+
+  // 9 — no console errors + screenshots exist
+  console.log('9. integrity');
   ok(consoleErrors.length === 0, `no console errors${consoleErrors.length ? ' → ' + consoleErrors.slice(0, 5).join(' | ') : ''}`);
-  for (const name of ['01-overview', '02-taj-card', '03-night', '04-tour', '05-walk', '06-minimap-jump']) {
+  for (const name of ['01-overview', '02-taj-card', '03-night', '04-tour', '05-walk', '06-minimap-jump', '07-trip']) {
     const s = await stat(`${SHOTS}/${name}.png`).catch(() => null);
     ok(s && s.size > 20000, `${name}.png captured (${s ? Math.round(s.size / 1024) + 'KB' : 'missing'})`);
   }

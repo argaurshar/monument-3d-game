@@ -1,7 +1,7 @@
 // The on-map info card: history + "plan your visit" trip data. Reads from the
 // static DOM skeleton in index.html and fills it per monument.
 
-export function createInfoCard({ byId, onNearby, onWalk, onClose }) {
+export function createInfoCard({ byId, onNearby, onWalk, onClose, onShare, onTripToggle, isInTrip }) {
   const el = document.getElementById('infocard');
   const nameEl = el.querySelector('.ic-name');
   const locEl = el.querySelector('.ic-loc');
@@ -11,10 +11,20 @@ export function createInfoCard({ byId, onNearby, onWalk, onClose }) {
   const tripGrid = el.querySelector('.ic-trip-grid');
   const nearbyEl = el.querySelector('.ic-nearby');
   const walkBtn = el.querySelector('.ic-walk');
+  const shareBtn = el.querySelector('.ic-share');
+  const tripBtn = el.querySelector('.ic-trip-add');
   let currentId = null;
 
   el.querySelector('.ic-close').addEventListener('click', () => { hide(); if (onClose) onClose(); });
   walkBtn.addEventListener('click', () => { if (currentId && onWalk) onWalk(currentId); });
+  shareBtn.addEventListener('click', () => { if (currentId && onShare) onShare(currentId); });
+  tripBtn.addEventListener('click', () => { if (currentId && onTripToggle) { onTripToggle(currentId); refreshTrip(); } });
+
+  function refreshTrip() {
+    const inTrip = currentId && isInTrip && isInTrip(currentId);
+    tripBtn.textContent = inTrip ? '✓ In your trip' : '🧭 Add to trip';
+    tripBtn.classList.toggle('active', !!inTrip);
+  }
 
   function chip(text, cls) {
     const s = document.createElement('span');
@@ -69,6 +79,7 @@ export function createInfoCard({ byId, onNearby, onWalk, onClose }) {
       }
     }
 
+    refreshTrip();
     el.hidden = false;
     el.scrollTop = 0;
   }
@@ -78,5 +89,5 @@ export function createInfoCard({ byId, onNearby, onWalk, onClose }) {
     currentId = null;
   }
 
-  return { show, hide, el, get currentId() { return currentId; } };
+  return { show, hide, el, refreshTrip, get currentId() { return currentId; } };
 }

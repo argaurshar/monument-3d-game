@@ -35,6 +35,10 @@ export class CameraRig {
     this.velZoom = 0;
     this.panVel = new THREE.Vector3();
 
+    // idle "attract mode": slowly orbit when the user has been still a while
+    this.idle = 0;
+    this.autoRotate = true;
+
     // fly / walk state
     this.yaw = 0;
     this.pitch = -0.5;
@@ -66,6 +70,7 @@ export class CameraRig {
 
     dom.addEventListener('pointermove', (e) => {
       if (!this.enabled) return;
+      this.idle = 0; // any pointer movement counts as activity
       if (document.pointerLockElement === dom) {
         this._applyLook(e.movementX, e.movementY);
         return;
@@ -146,6 +151,7 @@ export class CameraRig {
   }
 
   _notifyInput() {
+    this.idle = 0;
     if (this.onUserInput) this.onUserInput();
   }
 
@@ -333,6 +339,11 @@ export class CameraRig {
       this.velTheta *= 0.88;
       this.velPhi *= 0.88;
       this.velZoom *= 0.82;
+      // idle attract mode: after a while of stillness, drift slowly
+      this.idle += dt;
+      if (this.autoRotate && this.idle > 11 && Math.abs(this.velTheta) < 6e-4) {
+        this.theta += dt * 0.05;
+      }
       // arrow keys rotate in orbit too
       if (this.keys.has('ArrowLeft')) this.theta += dt * 1.2;
       if (this.keys.has('ArrowRight')) this.theta -= dt * 1.2;
