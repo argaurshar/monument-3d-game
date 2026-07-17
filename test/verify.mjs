@@ -128,8 +128,33 @@ try {
   await page.waitForTimeout(500);
   await shot(page, '06-minimap-jump');
 
-  // 8 — deep links + "My Journey" trip planner
-  console.log('8. deep links + trip planner');
+  // 8 — middle-mouse-button drag pans the map
+  console.log('8. middle-drag pan');
+  await page.keyboard.press('1');
+  await page.keyboard.press('Escape'); // close the info card so it doesn't cover the drag point
+  await page.waitForFunction(() => !window.__ATLAS__.flying, null, { timeout: 8000 });
+  await page.waitForTimeout(200);
+  const panBefore = await page.evaluate(() => window.__ATLAS__.orbitTarget());
+  const px = 720, py = 240; // upper-centre: clear of the sidebar (left) and any card (bottom)
+  await page.mouse.move(px, py);
+  await page.mouse.down({ button: 'middle' });
+  let grabbed = false;
+  for (let i = 1; i <= 10; i++) {
+    await page.mouse.move(px + i * 14, py + i * 4);
+    if (!grabbed) grabbed = await page.evaluate(() => document.getElementById('scene').classList.contains('grabbing'));
+  }
+  await page.mouse.up({ button: 'middle' });
+  await page.waitForTimeout(150);
+  const panAfter = await page.evaluate(() => window.__ATLAS__.orbitTarget());
+  const panMoved = Math.hypot(panAfter.x - panBefore.x, panAfter.z - panBefore.z);
+  // pan is zoom-scaled (k = radius×0.0012); zoomed in after the minimap jump this
+  // is ~1u, clearly distinct from a rotate (which leaves the target unmoved at 0u)
+  ok(panMoved > 0.6, `middle-drag panned the map (${panMoved.toFixed(1)}u)`);
+  ok(grabbed, 'grabbing cursor shown while panning');
+  ok(!(await page.evaluate(() => document.getElementById('scene').classList.contains('grabbing'))), 'cursor restored after pan');
+
+  // 9 — deep links + "My Journey" trip planner
+  console.log('9. deep links + trip planner');
   // focusing a monument writes a shareable hash
   await page.evaluate(() => window.__ATLAS__.focus('charminar'));
   await page.waitForFunction(() => window.__ATLAS__.focusedId === 'charminar' && !window.__ATLAS__.flying, null, { timeout: 10000 });
@@ -149,8 +174,8 @@ try {
   await shot(page, '07-trip');
   await page.evaluate(() => window.__ATLAS__.tripSetOpen(false));
 
-  // 9 — no console errors + screenshots exist
-  console.log('9. integrity');
+  // 10 — no console errors + screenshots exist
+  console.log('10. integrity');
   ok(consoleErrors.length === 0, `no console errors${consoleErrors.length ? ' → ' + consoleErrors.slice(0, 5).join(' | ') : ''}`);
   for (const name of ['01-overview', '02-taj-card', '03-night', '04-tour', '05-walk', '06-minimap-jump', '07-trip']) {
     const s = await stat(`${SHOTS}/${name}.png`).catch(() => null);

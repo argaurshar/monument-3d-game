@@ -368,6 +368,7 @@ window.__ATLAS__ = {
   focus: (id) => focusMonument(id),
   worldPosOf: (id) => { const r = recById.get(id); return r ? { x: r.position.x, y: r.position.y, z: r.position.z } : null; },
   minimapPosOf: (id) => minimap.posOf(id),
+  orbitTarget: () => ({ x: rig.target.x, z: rig.target.z }),
   tripCount: () => trip.count(),
   tripToggle: (id) => trip.toggle(id),
   tripSetOpen: (v) => trip.setOpen(v),

@@ -61,7 +61,7 @@ work — ES modules require an `http(s)://` origin.)
 
 | Action | Control |
 | --- | --- |
-| Rotate / zoom / pan | **Drag** · **Scroll** · **Right-drag** |
+| Rotate / zoom / pan | **Drag** · **Scroll** · **Middle-drag** (or **Right-drag** / **Shift-drag**) to pan the map |
 | Visit a monument | **Double-click** it, or pick it from the list / minimap |
 | Move (Fly / Walk) | **W A S D**, **Q/E** up-down (Fly), **Shift** to boost |
 | Camera modes | **1** Orbit · **2** Fly · **3** Walk |
