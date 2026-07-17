@@ -65,6 +65,12 @@ work — ES modules require an `http(s)://` origin.)
 | Overview / reset | **H** · **Esc** closes cards & exits the tour |
 | Fullscreen · Screenshot | **F** · 📷 button |
 
+**On phones / touch:** it's fully touch-friendly — **drag** to look, **pinch** to
+zoom, **tap** a monument to visit it, and use the **☰** button for the searchable
+list (it slides in as a drawer). In **Fly / Walk** modes an on-screen **joystick**
+appears for movement while you drag to look around. The layout adapts to portrait
+and landscape, and the info panel becomes a bottom sheet.
+
 ## 🗺️ The 22 monuments
 
 **North** — Taj Mahal · Qutub Minar · India Gate · Red Fort · Lotus Temple ·

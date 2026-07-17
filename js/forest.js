@@ -8,10 +8,12 @@ import { mulberry32 } from './utils.js';
 // and canopies — so the whole forest is just 2 draw calls. Trees clamp to the
 // terrain, avoid water and the snow line, and keep clear of monument plazas.
 
-const MAX_TREES = 6000;
 const STEP = 0.16; // degrees between candidate clusters
 
 export function createForest(sites = []) {
+  // fewer trees on phones (weaker GPUs, fill-rate bound)
+  const coarse = matchMedia('(pointer: coarse)').matches || window.innerWidth < 760;
+  const MAX_TREES = coarse ? 3000 : 6000;
   const rand = mulberry32(20260717);
   const greens = [0x4f7a3a, 0x5c8a45, 0x6b9a4e, 0x43702f, 0x77a457, 0x568b3e];
   const trunks = [];

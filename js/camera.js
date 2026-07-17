@@ -38,6 +38,7 @@ export class CameraRig {
     // fly / walk state
     this.yaw = 0;
     this.pitch = -0.5;
+    this.touchMove = new THREE.Vector2(0, 0); // set by the on-screen joystick
 
     this.keys = new Set();
     this._look = new THREE.Vector3();
@@ -315,6 +316,12 @@ export class CameraRig {
     }
   }
 
+  // joystick vector from the touch UI: x = strafe, y = forward (−1..1)
+  setTouchMove(x, y) {
+    this.touchMove.set(x, y);
+    if (x || y) this._notifyInput();
+  }
+
   // ----------------------------------------------------------------- update
   update(dt) {
     if (this.flying) return;
@@ -343,6 +350,11 @@ export class CameraRig {
     if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) move.sub(forward);
     if (this.keys.has('KeyA') || this.keys.has('ArrowLeft')) move.sub(right);
     if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) move.add(right);
+    // touch joystick (y = forward/back, x = strafe)
+    if (this.touchMove.x || this.touchMove.y) {
+      move.addScaledVector(forward, this.touchMove.y);
+      move.addScaledVector(right, this.touchMove.x);
+    }
     const boost = this.keys.has('ShiftLeft') || this.keys.has('ShiftRight') ? 3.2 : 1;
 
     if (this.mode === 'fly') {
