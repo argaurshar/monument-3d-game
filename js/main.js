@@ -7,6 +7,7 @@ import { updateTweens } from './tween.js';
 import { monumentSites, buildMonuments, MONUMENT_MATERIAL } from './models/index.js';
 import { createLabels } from './labels.js';
 import { createEnvirons } from './environs.js';
+import { createForest } from './forest.js';
 import { createPicking } from './picking.js';
 import { createSidebar } from './sidebar.js';
 import { createInfoCard } from './infocard.js';
@@ -36,6 +37,10 @@ for (const proxy of monuments.proxies) scene.add(proxy);
 const environs = createEnvirons(monuments.records, getGroundHeight);
 scene.add(environs);
 
+// forest cover across India's wooded regions (kept clear of monument plazas)
+const forest = createForest(monuments.records.map((r) => ({ x: r.position.x, z: r.position.z })));
+scene.add(forest);
+
 const labels = createLabels(monuments.records);
 scene.add(labels.group);
 
@@ -55,7 +60,7 @@ if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
 }
 
 const rig = new CameraRig(camera, canvas, getGroundHeight);
-const daynight = createDayNight({ env, labels, scene, monumentMaterial: MONUMENT_MATERIAL, environsMaterials: environs.userData.materials });
+const daynight = createDayNight({ env, labels, scene, monumentMaterial: MONUMENT_MATERIAL, environsMaterials: [...environs.userData.materials, ...forest.userData.materials] });
 
 // ---------------------------------------------------------------------------
 // UI + focus flow

@@ -13,9 +13,12 @@ network calls**. Runs from any static server and on GitHub Pages.
 
 ## ✨ Features
 
-- **A stylized 3D India** — hand-authored coastline, the Himalayas, Western &
-  Eastern Ghats, Aravallis, the Thar desert, the Deccan plateau, and the Ganga,
-  Yamuna, Brahmaputra, Godavari & Narmada rivers, afloat in an animated ocean.
+- **A stylized 3D India** — hand-authored coastline with proportionate mountain
+  ranges (Himalayas, Western & Eastern Ghats, Aravallis, Vindhyas, Northeast
+  hills), forest cover across the country's wooded regions (Western Ghats,
+  Northeast, central India, the Terai and the Sundarbans), the Thar desert, the
+  Deccan plateau, and the Ganga, Yamuna, Brahmaputra, Godavari & Narmada rivers,
+  afloat in an animated ocean.
 - **22 famous monuments**, each a low-poly model with a recognizable silhouette
   (Taj Mahal, Qutub Minar, Golden Temple, Hawa Mahal, Konark's chariot wheels,
   Meenakshi's rainbow gopuram, Statue of Unity, Howrah Bridge, and more).

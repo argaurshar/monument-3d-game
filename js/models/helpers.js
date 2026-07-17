@@ -43,42 +43,67 @@ export function box(w, h, d, color, o) {
   return place(bake(new THREE.BoxGeometry(w, h, d).toNonIndexed(), color), o);
 }
 
-// Segment counts are kept deliberately low — the low-poly look is the aesthetic
-// AND it keeps 22 merged monuments cheap on low-end GPUs / software rasterizers.
-export function cyl(rTop, rBottom, h, color, o = {}, seg = 10) {
+// Segment counts stay modest for the low-poly look, but high enough that domes
+// and towers read cleanly up close. 22 merged monuments are still cheap on a GPU.
+export function cyl(rTop, rBottom, h, color, o = {}, seg = 14) {
   return place(bake(new THREE.CylinderGeometry(rTop, rBottom, h, seg, 1, !!o.open).toNonIndexed(), color), o);
 }
 
-export function cone(r, h, color, o = {}, seg = 8) {
+export function cone(r, h, color, o = {}, seg = 12) {
   return place(bake(new THREE.ConeGeometry(r, h, seg).toNonIndexed(), color), o);
 }
 
-export function sphere(r, color, o = {}, ws = 10, hs = 7, thetaStart = 0, thetaLength = Math.PI) {
+export function sphere(r, color, o = {}, ws = 14, hs = 9, thetaStart = 0, thetaLength = Math.PI) {
   return place(bake(new THREE.SphereGeometry(r, ws, hs, 0, Math.PI * 2, thetaStart, thetaLength).toNonIndexed(), color), o);
 }
 
-export function torus(r, tube, color, o = {}, seg = 5, rings = 12, arc = Math.PI * 2) {
+export function torus(r, tube, color, o = {}, seg = 6, rings = 16, arc = Math.PI * 2) {
   return place(bake(new THREE.TorusGeometry(r, tube, seg, rings, arc).toNonIndexed(), color), o);
 }
 
+// pyramid / obelisk via a low-sided cone (sides=4 → square pyramid)
+export function pyramid(baseR, h, color, o = {}, sides = 4) {
+  return cone(baseR, h, color, o, sides);
+}
+
 // bulbous onion dome via a lathe profile — the signature Mughal silhouette
-export function onionDome(radius, height, color, o = {}) {
+export function onionDome(radius, height, color, o = {}, segs = 16) {
   const pts = [];
-  const steps = 8;
+  const steps = 14;
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
     // profile: flares out past 1.0 then tucks to a point (bulb)
-    const rr = Math.sin(t * Math.PI * 0.98) * (1 + 0.28 * Math.sin(t * Math.PI));
-    const yy = t;
-    pts.push(new THREE.Vector2(Math.max(rr * radius, 0.0006), yy * height));
+    const rr = Math.sin(t * Math.PI * 0.985) * (1 + 0.3 * Math.sin(t * Math.PI));
+    pts.push(new THREE.Vector2(Math.max(rr * radius, 0.0006), t * height));
   }
-  const geo = new THREE.LatheGeometry(pts, 10).toNonIndexed();
+  const geo = new THREE.LatheGeometry(pts, segs).toNonIndexed();
   return place(bake(geo, color), o);
+}
+
+// ribbed / fluted onion dome (Golden Temple, Gol Gumbaz): dome + vertical ribs
+export function ribbedDome(radius, height, color, o = {}, ribs = 12) {
+  const parts = [onionDome(radius, height, color, {}, 20)];
+  for (let i = 0; i < ribs; i++) {
+    const a = (i / ribs) * Math.PI * 2;
+    parts.push(box(radius * 0.05, height * 0.9, radius * 0.05, color, {
+      x: Math.cos(a) * radius * 0.82, z: Math.sin(a) * radius * 0.82, y: height * 0.42,
+    }));
+  }
+  return place(mergeGeoms(parts), o);
 }
 
 // short fat dome (stupa / Kamakhya / Victoria) — top hemisphere, squashed
 export function dome(radius, color, o = {}, squash = 0.72) {
-  return sphere(radius, color, { ...o, sy: (o.sy ?? 1) * squash }, 12, 6, 0, Math.PI / 2);
+  return sphere(radius, color, { ...o, sy: (o.sy ?? 1) * squash }, 16, 9, 0, Math.PI / 2);
+}
+
+// small pot-finial (kalash) that crowns temple towers
+export function kalash(r, color, o = {}) {
+  return place(mergeGeoms([
+    cyl(r * 0.5, r * 0.9, r * 0.8, color, { y: r * 0.4 }, 10),
+    sphere(r * 0.7, color, { y: r * 1.0 }, 10, 7),
+    cone(r * 0.28, r * 0.9, color, { y: r * 1.9 }, 8),
+  ]), o);
 }
 
 // tall tapering tower of `tiers` shrinking prisms (gopuram / vimana / pyramid)
@@ -168,6 +193,134 @@ export function wheel(radius, color, o = {}, spokes = 8) {
   const g = mergeGeoms(parts);
   // default orientation faces +Z (upright wheel); rotate via o
   return place(g, o);
+}
+
+// ------------------------------------------------------- composite architecture
+
+// A stepped South-Indian gopuram: shrinking rectangular tiers in bright bands,
+// each with a cornice lip and a row of little shrine niches, capped by a barrel
+// vault crowned with kalashas. `bands` = color per tier (cycled).
+export function gopuram(baseW, baseD, height, tiers, bands, o = {}, gold = 0xE7B73F) {
+  const parts = [];
+  let y = 0;
+  for (let i = 0; i < tiers; i++) {
+    const t = i / tiers;
+    const w = baseW * (1 - t * 0.6);
+    const d = baseD * (1 - t * 0.6);
+    const h = height / tiers;
+    const col = bands[i % bands.length];
+    parts.push(box(w, h * 0.82, d, col, { y: y + h * 0.41 }));
+    // white cornice lip
+    parts.push(box(w * 1.08, h * 0.16, d * 1.08, 0xF1EADB, { y: y + h * 0.9 }));
+    // row of niches across the front and back faces
+    const niches = Math.max(2, tiers - i + 1);
+    for (let j = 0; j < niches; j++) {
+      const nx = (j - (niches - 1) / 2) * (w / niches);
+      for (const sgn of [1, -1]) {
+        parts.push(box(w / niches * 0.55, h * 0.5, 0.1, 0xF1EADB, { x: nx, y: y + h * 0.42, z: sgn * (d / 2 + 0.02) }));
+      }
+    }
+    y += h;
+  }
+  // barrel-vault crown (horizontal half-cylinder) with finials
+  const crownW = baseW * (1 - 0.6) * 1.1;
+  parts.push(cyl(crownW * 0.42, crownW * 0.42, crownW * 1.5, bands[0], { y: y + crownW * 0.28, rz: Math.PI / 2 }, 12));
+  for (let k = 0; k < 5; k++) parts.push(kalash(crownW * 0.13, gold, { x: (k - 2) * crownW * 0.34, y: y + crownW * 0.56 }));
+  return place(mergeGeoms(parts), o);
+}
+
+// A curvilinear Nagara shikhara (Khajuraho / Odisha): a tall ribbed spire built
+// from stacked shrinking discs following a bulging curve, topped by an amalaka
+// (ribbed ring) and kalash. Smaller urushringa spirelets cling to the sides.
+export function shikhara(baseR, height, color, o = {}, spirelets = true) {
+  const parts = [];
+  const layers = 14;
+  for (let i = 0; i < layers; i++) {
+    const t = i / layers;
+    const curve = Math.pow(1 - t, 0.72);          // convex taper
+    const rib = 1 + 0.12 * Math.cos(t * Math.PI * 5); // vertical ribbing
+    const r = baseR * curve * rib;
+    parts.push(cyl(baseR * Math.pow(1 - (i + 1) / layers, 0.72), r, height / layers, color, { y: height * t + height / layers / 2 }, 12));
+  }
+  // amalaka + kalash
+  parts.push(cyl(baseR * 0.34, baseR * 0.34, height * 0.05, color, { y: height * 0.98 }, 16));
+  parts.push(sphere(baseR * 0.28, color, { y: height * 1.02, sy: 0.6 }, 14, 8));
+  parts.push(kalash(baseR * 0.2, color, { y: height * 1.06 }));
+  if (spirelets) {
+    for (let i = 0; i < 4; i++) {
+      const a = i * Math.PI / 2 + Math.PI / 4;
+      const sr = baseR * 0.42, sh = height * 0.5;
+      for (let k = 0; k < 8; k++) {
+        const t = k / 8;
+        parts.push(cyl(sr * (1 - (k + 1) / 8) * 0.9, sr * (1 - t) * 0.9, sh / 8, color, {
+          x: Math.cos(a) * baseR * 0.82, z: Math.sin(a) * baseR * 0.82, y: sh * t + sh / 16 + height * 0.05,
+        }, 8));
+      }
+    }
+  }
+  return place(mergeGeoms(parts), o);
+}
+
+// A row of pillars carrying a flat entablature — a colonnade / arcade face.
+export function colonnade(count, spacing, pillarH, color, o = {}, withArches = false) {
+  const parts = [];
+  const span = (count - 1) * spacing;
+  for (let i = 0; i < count; i++) {
+    const x = -span / 2 + i * spacing;
+    parts.push(cyl(pillarH * 0.09, pillarH * 0.11, pillarH, color, { x, y: pillarH / 2 }, 10));
+    parts.push(box(pillarH * 0.26, pillarH * 0.1, pillarH * 0.26, color, { x, y: pillarH * 0.96 })); // capital
+    if (withArches && i < count - 1) {
+      parts.push(torus(spacing * 0.42, pillarH * 0.05, color, { x: x + spacing / 2, y: pillarH * 0.9, rx: Math.PI / 2 }, 5, 12, Math.PI));
+    }
+  }
+  parts.push(box(span + spacing, pillarH * 0.12, pillarH * 0.3, color, { y: pillarH * 1.05 })); // entablature
+  return place(mergeGeoms(parts), o);
+}
+
+// A stylised standing human figure (Statue of Unity): stance, robe, arms at
+// sides, shoulders, head. Faces +Z. Total height ≈ `height`.
+export function humanFigure(height, color, o = {}) {
+  const parts = [];
+  const H = height;
+  // legs (slightly apart, tapering) hidden under a long robe
+  parts.push(cyl(H * 0.05, H * 0.07, H * 0.46, color, { x: -H * 0.05, y: H * 0.23 }, 10));
+  parts.push(cyl(H * 0.05, H * 0.07, H * 0.46, color, { x: H * 0.05, y: H * 0.23 }, 10));
+  // robe/dhoti flare from waist to feet
+  parts.push(cyl(H * 0.16, H * 0.11, H * 0.5, color, { y: H * 0.25 }, 14));
+  // torso
+  parts.push(cyl(H * 0.13, H * 0.16, H * 0.32, color, { y: H * 0.63 }, 14));
+  // draped shawl over one shoulder (angled slab)
+  parts.push(box(H * 0.3, H * 0.34, H * 0.06, color, { y: H * 0.64, z: H * 0.08, rz: 0.12 }));
+  // shoulders
+  parts.push(cyl(H * 0.17, H * 0.15, H * 0.08, color, { y: H * 0.8 }, 14));
+  // arms at the sides
+  parts.push(cyl(H * 0.04, H * 0.05, H * 0.34, color, { x: -H * 0.17, y: H * 0.63, rz: 0.08 }, 8));
+  parts.push(cyl(H * 0.04, H * 0.05, H * 0.34, color, { x: H * 0.17, y: H * 0.63, rz: -0.08 }, 8));
+  // neck + head
+  parts.push(cyl(H * 0.05, H * 0.05, H * 0.05, color, { y: H * 0.86 }, 8));
+  parts.push(sphere(H * 0.08, color, { y: H * 0.93 }, 12, 9));
+  return place(mergeGeoms(parts), o);
+}
+
+// A Sanchi-style torana gateway: two pillars carrying three curved architraves.
+export function torana(width, height, color, o = {}) {
+  const parts = [];
+  const pr = width * 0.06;
+  parts.push(cyl(pr, pr * 1.15, height, color, { x: -width / 2, y: height / 2 }, 8));
+  parts.push(cyl(pr, pr * 1.15, height, color, { x: width / 2, y: height / 2 }, 8));
+  for (let k = 0; k < 3; k++) {
+    parts.push(box(width * 1.15, height * 0.07, pr * 1.4, color, { y: height * (0.78 + k * 0.13) }));
+  }
+  return place(mergeGeoms(parts), o);
+}
+
+// A perforated lattice / jaali panel suggested by a grid of small holes: we
+// build the frame + a grid of thin bars (reads as a screen at model scale).
+export function latticeWall(w, h, thick, color, o = {}, nx = 5, ny = 4) {
+  const parts = [box(w, h, thick * 0.4, color, { y: 0 })];
+  for (let i = 1; i < nx; i++) parts.push(box(thick * 0.5, h, thick, color, { x: -w / 2 + (i * w) / nx, y: 0 }));
+  for (let j = 1; j < ny; j++) parts.push(box(w, thick * 0.5, thick, color, { y: -h / 2 + (j * h) / ny }));
+  return place(mergeGeoms(parts), o);
 }
 
 // --------------------------------------------------------------------- merge

@@ -97,23 +97,28 @@ export const INDIA_OUTLINE = [
 // ---------------------------------------------------------------------------
 // Relief. Ridge polylines contribute gaussian elevation by distance (degrees).
 // ---------------------------------------------------------------------------
+// amp = peak height in world units (~0.55 units per km of real elevation, so
+// the ranges stay proportionate: Himalaya ≫ Western Ghats > Aravalli/Vindhya).
+// peak = extra ridgeline roughness so crests break into individual summits.
 export const RIDGES = [
-  // Great Himalaya, west section (Kashmir → Kumaon)
-  { pts: [[73.8, 36.2], [75.2, 35.6], [76.6, 35.1], [77.8, 34.6], [78.4, 33.8], [78.6, 32.9], [78.9, 32.1], [79.6, 31.2], [80.5, 30.5], [81.0, 30.15]], amp: 4.4, sigma: 1.05 },
+  // Great Himalaya, west section (Kashmir → Kumaon) — the giants
+  { pts: [[73.8, 36.2], [75.2, 35.6], [76.6, 35.1], [77.8, 34.6], [78.4, 33.8], [78.6, 32.9], [78.9, 32.1], [79.6, 31.2], [80.5, 30.5], [81.0, 30.15]], amp: 4.6, sigma: 1.0, peak: 1.0 },
   // Great Himalaya, east section (Sikkim → Arunachal)
-  { pts: [[88.3, 27.9], [89.4, 28.0], [91.8, 27.8], [93.0, 28.4], [94.4, 29.0], [95.6, 29.2], [96.5, 28.9]], amp: 3.9, sigma: 0.95 },
-  // Northeastern hills along Myanmar (Patkai / Naga / Mizo)
-  { pts: [[95.8, 27.2], [95.0, 26.2], [94.5, 25.2], [94.0, 24.2], [93.4, 23.2], [92.9, 22.3]], amp: 0.95, sigma: 0.55 },
-  // Meghalaya plateau
-  { pts: [[90.4, 25.5], [91.3, 25.45], [92.2, 25.4]], amp: 0.85, sigma: 0.45 },
-  // Western Ghats
-  { pts: [[73.5, 20.3], [73.6, 19.0], [73.8, 17.6], [74.1, 16.2], [74.5, 14.9], [75.0, 13.6], [75.7, 12.4], [76.5, 11.3], [77.2, 10.3], [77.35, 9.3]], amp: 1.05, sigma: 0.42 },
+  { pts: [[88.3, 27.9], [89.4, 28.0], [91.8, 27.8], [93.0, 28.4], [94.4, 29.0], [95.6, 29.2], [96.5, 28.9]], amp: 4.1, sigma: 0.92, peak: 1.0 },
+  // Northeastern hills along Myanmar (Patkai / Naga / Mizo) — real mountains
+  { pts: [[95.8, 27.2], [95.0, 26.2], [94.5, 25.2], [94.0, 24.2], [93.4, 23.2], [92.9, 22.3]], amp: 1.75, sigma: 0.5, peak: 0.9 },
+  // Meghalaya plateau (Khasi/Garo hills)
+  { pts: [[90.2, 25.5], [91.3, 25.45], [92.3, 25.4]], amp: 1.05, sigma: 0.42, peak: 0.6 },
+  // Western Ghats — long, high wall down the west coast
+  { pts: [[73.4, 20.4], [73.6, 19.0], [73.8, 17.6], [74.1, 16.2], [74.5, 14.9], [75.0, 13.6], [75.7, 12.4], [76.5, 11.3], [77.2, 10.3], [77.4, 9.3]], amp: 1.55, sigma: 0.4, peak: 0.85 },
+  // Nilgiris knot (where Western & Eastern Ghats meet) — high massif
+  { pts: [[76.4, 11.4], [76.7, 11.3], [77.0, 11.4]], amp: 1.7, sigma: 0.34, peak: 0.7 },
   // Eastern Ghats (lower, broken)
-  { pts: [[84.6, 19.2], [83.4, 18.2], [82.2, 17.2], [80.8, 15.9], [79.6, 14.3], [79.0, 13.2]], amp: 0.5, sigma: 0.55 },
-  // Aravalli range
-  { pts: [[72.9, 24.5], [73.6, 25.4], [74.4, 26.3], [75.4, 27.2], [76.2, 27.9]], amp: 0.45, sigma: 0.4 },
-  // Vindhya / Satpura belt across the middle
-  { pts: [[74.5, 22.4], [76.5, 22.3], [78.5, 22.6], [80.5, 23.0], [82.0, 23.4]], amp: 0.42, sigma: 0.6 },
+  { pts: [[84.6, 19.2], [83.4, 18.2], [82.2, 17.2], [80.8, 15.9], [79.6, 14.3], [79.0, 13.2]], amp: 0.9, sigma: 0.5, peak: 0.8 },
+  // Aravalli range (Rajasthan diagonal)
+  { pts: [[72.7, 24.5], [73.6, 25.4], [74.4, 26.3], [75.4, 27.2], [76.4, 28.0]], amp: 0.95, sigma: 0.38, peak: 0.8 },
+  // Vindhya / Satpura belt across central India
+  { pts: [[74.2, 22.2], [76.5, 22.2], [78.5, 22.5], [80.5, 22.9], [82.2, 23.3]], amp: 0.8, sigma: 0.55, peak: 0.8 },
 ];
 
 // Broad elevated masses: [lonCentre, latCentre, amplitude, sigma]
@@ -139,3 +144,31 @@ export const RIVERS = [
   { name: 'Godavari', pts: [[73.6, 19.95], [74.8, 19.5], [76.0, 19.3], [77.3, 19.0], [78.7, 18.8], [79.9, 18.6], [80.7, 18.1], [81.3, 17.4], [81.75, 16.75]] },
   { name: 'Narmada', pts: [[81.6, 22.7], [80.4, 23.0], [79.2, 22.9], [78.0, 22.5], [76.6, 22.2], [75.2, 22.1], [73.9, 21.9], [72.95, 21.7]] },
 ];
+
+// ---------------------------------------------------------------------------
+// Forest cover. Each zone is a soft blob [lonC, latC, rLon, rLat, weight]; the
+// density function sums them so trees (and a greener ground tint) appear where
+// India is actually forested — the Ghats, the Northeast, central India, the
+// Terai foothills, the Sundarbans — and stay away from desert and high snow.
+// ---------------------------------------------------------------------------
+export const FOREST_ZONES = [
+  [74.4, 14.6, 1.1, 4.6, 1.05],  // Western Ghats (long strip down the west)
+  [76.7, 11.3, 1.0, 1.2, 1.0],   // Nilgiris / southern Ghats
+  [92.6, 26.4, 3.1, 2.3, 1.05],  // Northeast (Assam, Arunachal, Nagaland)
+  [91.1, 25.3, 1.5, 0.9, 0.95],  // Meghalaya
+  [81.4, 21.4, 3.3, 2.5, 0.95],  // Central India (MP / Chhattisgarh sal forests)
+  [84.6, 22.8, 2.0, 1.7, 0.85],  // Jharkhand / northern Odisha
+  [80.5, 28.7, 4.6, 0.65, 0.75], // Terai — Himalayan foothill forests
+  [83.4, 18.4, 1.7, 1.7, 0.75],  // Eastern Ghats
+  [88.85, 21.85, 0.85, 0.5, 1.0],// Sundarbans mangroves
+  [77.2, 30.4, 2.2, 0.8, 0.7],   // lower Himalaya (Himachal / Uttarakhand)
+];
+
+export function forestDensity(lon, lat) {
+  let d = 0;
+  for (const [cx, cy, rx, ry, w] of FOREST_ZONES) {
+    const dx = (lon - cx) / rx, dy = (lat - cy) / ry;
+    d += w * Math.exp(-(dx * dx + dy * dy));
+  }
+  return d > 1 ? 1 : d;
+}
