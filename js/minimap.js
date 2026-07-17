@@ -52,10 +52,21 @@ export function createMinimap({ records, camera, onSelect, onGoto }) {
   const dir = new THREE.Vector3();
   let lastDraw = 0;
   let focusedId = null;
+  let route = []; // canvas points of the trip route
 
   function draw() {
     ctx.clearRect(0, 0, W, H);
     ctx.drawImage(bg, 0, 0);
+    // trip route connectors (drawn under the dots)
+    if (route.length > 1) {
+      ctx.beginPath();
+      route.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+      ctx.strokeStyle = 'rgba(255,157,60,0.9)';
+      ctx.lineWidth = 1.6;
+      ctx.setLineDash([4, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
     // monument dots
     for (const d of dots) {
       const r = d.id === focusedId ? 4 : 2.6;
@@ -107,6 +118,7 @@ export function createMinimap({ records, camera, onSelect, onGoto }) {
 
   return {
     setFocused(id) { focusedId = id; },
+    setRoute(worldPts) { route = (worldPts || []).map((p) => toMap(p.x, p.z)); lastDraw = 0; },
     posOf(id) { const d = dots.find((x) => x.id === id); return d ? { x: d.map.x, y: d.map.y } : null; },
     update(now) {
       if (now - lastDraw < 90) return; // ~11 Hz

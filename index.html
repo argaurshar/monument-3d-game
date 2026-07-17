@@ -68,13 +68,28 @@
       <button data-mode="walk">Walk</button>
     </div>
     <div id="icon-buttons">
-      <button id="btn-night" title="Night mode (N)">🌙</button>
-      <button id="btn-tour" title="Guided tour (T)">▶</button>
-      <button id="btn-shot" title="Save a postcard 📷">📷</button>
-      <button id="btn-full" title="Fullscreen (F)">⛶</button>
-      <button id="btn-home" title="Overview (H)">🏠</button>
+      <button id="btn-night" title="Night mode (N)" aria-label="Toggle night mode">🌙</button>
+      <button id="btn-tour" title="Guided tour (T)" aria-label="Guided tour">▶</button>
+      <button id="btn-trip" title="My journey — your trip (J)" aria-label="Open your trip">🧭<span id="trip-badge" hidden>0</span></button>
+      <button id="btn-shot" title="Save a postcard" aria-label="Save a screenshot">📷</button>
+      <button id="btn-full" title="Fullscreen (F)" aria-label="Toggle fullscreen">⛶</button>
+      <button id="btn-home" title="Overview (H)" aria-label="Reset to overview">🏠</button>
     </div>
   </div>
+
+  <!-- trip planner: "My Journey" slide-in panel -->
+  <aside id="trip-panel" hidden aria-label="Your journey">
+    <header>
+      <div class="tp-title">My Journey</div>
+      <button class="tp-close" title="Close" aria-label="Close journey panel">×</button>
+    </header>
+    <div class="tp-sub" id="tp-sub">Add monuments to build a trip route.</div>
+    <div class="tp-list" id="tp-list"></div>
+    <div class="tp-actions">
+      <button id="tp-play">▶ Play journey</button>
+      <button id="tp-clear">Clear</button>
+    </div>
+  </aside>
 
   <!-- proximity caption -->
   <div id="caption" hidden>
@@ -98,7 +113,9 @@
       <div class="ic-nearby"></div>
     </div>
     <div class="ic-actions">
-      <button class="ic-walk">🚶 Walk here</button>
+      <button class="ic-trip-add" title="Add this monument to your journey">🧭 Add to trip</button>
+      <button class="ic-walk" title="Stroll around the site">🚶 Walk here</button>
+      <button class="ic-share" title="Copy a shareable link to this monument">🔗 Share</button>
     </div>
   </section>
 
